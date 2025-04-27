@@ -41,5 +41,35 @@ CHIP ALU {
         ng;      // if (out < 0)  equals 1, else 0
 
     PARTS:
-    //// Replace this comment with your code.
+    // Xの前処理
+    Mux16(a=x, b=false, sel=zx, out=xAfterZero);
+    Not16(in=xAfterZero, out=notX);
+    Mux16(a=xAfterZero, b=notX, sel=nx, out=xAfterNegate);
+
+    // Yの前処理
+    Mux16(a=y, b=false, sel=zy, out=yAfterZero);
+    Not16(in=yAfterZero, out=notY);
+    Mux16(a=yAfterZero, b=notY, sel=ny, out=yAfterNegate);
+
+    // 計算
+    Add16(a=xAfterNegate, b=yAfterNegate, out=xAddY);
+    And16(a=xAfterNegate, b=yAfterNegate, out=xAndY);
+    Mux16(a=xAndY, b=xAddY, sel=f, out=culcResult);
+
+    // 計算結果Negate処理
+    Not16(in=culcResult, out=notCulcResult);
+    Mux16(a=culcResult, b=notCulcResult, sel=no, out=outTemp);
+    Or16(a=outTemp, b=false, out=out);
+
+    // zr出力処理
+    And16(a=outTemp, b=true, out[0..7]=outLow, out[8..15]=outHigh);
+    Or8Way(in=outLow, out=or1);
+    Or8Way(in=outHigh, out=or2);
+    Or(a=or1, b=or2, out=orAll);
+    Not(in=orAll, out=zr);
+
+    // ng出力処理
+    And16(a=outTemp, b=true, out[15]=msb);
+    And(a=msb, b=true, out=ng);
+
 }
