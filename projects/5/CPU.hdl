@@ -42,8 +42,9 @@ CHIP CPU {
     Mux16(a=outAlu, b=instruction, sel=isAInstruction, out=inputA);
     ARegister(in=inputA, load=loadA, out=outARegister);
 
-    // x, y準備
-    DRegister(in=outAlu, load=instruction[4], out=xAlu);
+    // C命令(instruction[15]=1)かつdビットのD部分(instruction[4])が1の場合のみロード
+    And(a=instruction[15], b=instruction[4], out=loadD);
+    DRegister(in=outAlu, load=loadD, out=xAlu);
     Mux16(a=outARegister, b=inM, sel=instruction[12], out=yAlu);
 
     ALU(x=xAlu, y=yAlu, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6],
