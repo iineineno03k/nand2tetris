@@ -33,4 +33,45 @@ CHIP CPU {
 
     PARTS:
 	//// Replace this comment with your code.
+
+    // instruction[15]が0ならA命令、1ならC命令
+    Not(in=instruction[15], out=isAInstruction);
+    // A命令の場合、または、C命令でdビットのA部分(instruction[5])が1の場合にロード
+    Or(a=isAInstruction, b=instruction[5], out=loadA);
+    // A命令の場合はinstructionから、C命令の場合はALU出力から入力を選択
+    Mux16(a=outAlu, b=instruction, sel=isAInstruction, out=inputA);
+    ARegister(in=inputA, load=loadA, out=outARegister);
+
+    // x, y準備
+    DRegister(in=outAlu, load=instruction[4], out=xAlu);
+    Mux16(a=outARegister, b=inM, sel=instruction[12], out=yAlu);
+
+    ALU(x=xAlu, y=yAlu, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6],
+        out=outAlu, zr=zrAlu, ng=ngAlu);
+    // writeM出力
+    And(a=instruction[15], b=instruction[3], out=writeM);
+    // ALU出力
+    Or16(a=outAlu, b=outAlu, out=outM);
+    // addressM出力
+    Or16(a=outARegister, b=outARegister, out[0..14]=addressM);
+
+
+    // 正の条件: !ng AND !zr AND instruction[0]
+    Not(in=ngAlu, out=notNg);
+    Not(in=zrAlu, out=notZr);
+    And(a=notNg, b=notZr, out=posAlu);
+    And(a=posAlu, b=instruction[0], out=jgt);
+    // 0の条件: zr AND instruction[1]
+    And(a=zrAlu, b=instruction[1], out=jeq);
+    // 負の条件: ng AND instruction[2]
+    And(a=ngAlu, b=instruction[2], out=jlt);
+
+    // ジャンプ条件を組み合わせ
+    Or(a=jgt, b=jeq, out=jge);
+    Or(a=jge, b=jlt, out=jumpCondition);
+
+    // C命令の場合のみジャンプ
+    And(a=instruction[15], b=jumpCondition, out=loadPC);
+
+    PC(in=outARegister, inc=true, load=loadPC, reset=reset, out[0..14]=pc);
 }
