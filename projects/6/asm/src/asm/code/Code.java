@@ -2,6 +2,7 @@
  * Code.java - バイナリコード生成クラス
  * Hackのアセンブリコード要素をバイナリコードに変換します
  */
+package asm.code;
 
 public class Code {
     /**

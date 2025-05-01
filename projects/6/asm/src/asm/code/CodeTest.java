@@ -1,6 +1,7 @@
 /**
  * CodeTest.java - Codeクラステスト
  */
+package asm.code;
 
 import java.io.IOException;
 
