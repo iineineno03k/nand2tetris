@@ -3,46 +3,28 @@ package asm.hack;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
-// Parser と Code クラスのインポート
+// 必要なクラスのインポート
 import asm.parser.Parser;
 import asm.code.Code;
+import asm.symbol.SymbolTable;
 
 /**
  * Hack.java - HackアセンブラのメインクラスNAND2TETRISプロジェクト6
- * ParserとCodeを使用して、Hackアセンブリコードをマシン語に変換します
+ * Parser、Code、SymbolTableを使用して、Hackアセンブリコードをマシン語に変換します
  */
 public class Hack {
     // シンボルテーブル
-    private Map<String, Integer> symbolTable;
+    private SymbolTable symbolTable;
     // 次に割り当てられる変数アドレス (R15の後から開始)
     private int nextVariableAddress = 16;
 
     /**
-     * コンストラクタ - 初期シンボルテーブルを設定
+     * コンストラクタ - 初期設定
      */
     public Hack() {
-        symbolTable = new HashMap<>();
-        initSymbolTable();
-    }
-
-    /**
-     * 初期シンボルテーブルをセットアップ
-     */
-    private void initSymbolTable() {
-        // 事前定義シンボル
-        for (int i = 0; i <= 15; i++) {
-            symbolTable.put("R" + i, i);
-        }
-        symbolTable.put("SCREEN", 16384);
-        symbolTable.put("KBD", 24576);
-        symbolTable.put("SP", 0);
-        symbolTable.put("LCL", 1);
-        symbolTable.put("ARG", 2);
-        symbolTable.put("THIS", 3);
-        symbolTable.put("THAT", 4);
+        // シンボルテーブルの初期化
+        symbolTable = new SymbolTable();
     }
 
     /**
@@ -68,7 +50,7 @@ public class Hack {
         while (parser.hasMoreCommands()) {
             if (parser.instructionType().equals("L_COMMAND")) {
                 // ラベルをシンボルテーブルに追加
-                symbolTable.put(parser.symbol(), romAddress);
+                symbolTable.addEntry(parser.symbol(), romAddress);
             } else {
                 // A命令またはC命令の場合はROMアドレスを進める
                 romAddress++;
@@ -98,12 +80,12 @@ public class Hack {
                     address = Integer.parseInt(symbol);
                 } catch (NumberFormatException e) {
                     // シンボルの場合
-                    if (!symbolTable.containsKey(symbol)) {
+                    if (!symbolTable.contains(symbol)) {
                         // 新しい変数としてシンボルテーブルに追加
-                        symbolTable.put(symbol, nextVariableAddress);
+                        symbolTable.addEntry(symbol, nextVariableAddress);
                         nextVariableAddress++;
                     }
-                    address = symbolTable.get(symbol);
+                    address = symbolTable.getAddress(symbol);
                 }
                 
                 // 16ビットバイナリに変換

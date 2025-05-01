@@ -3,6 +3,7 @@ package asm;
 import asm.code.CodeTest;
 import asm.parser.ParserTest;
 import asm.hack.HackTest;
+import asm.symbol.SymbolTableTest;
 
 /**
  * Test.java - 統合テストコントローラ
@@ -20,6 +21,10 @@ public class Test {
             // Code テスト
             System.out.println("\n\n===== Code テスト実行 =====");
             CodeTest.main(args);
+            
+            // SymbolTable テスト
+            System.out.println("\n\n===== SymbolTable テスト実行 =====");
+            SymbolTableTest.main(args);
             
             // Hack テスト
             System.out.println("\n\n===== Hack テスト実行 =====");
