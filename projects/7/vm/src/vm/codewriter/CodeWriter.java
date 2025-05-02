@@ -49,12 +49,21 @@ public class CodeWriter {
             incrementSP();
         } else if (command.equals("eq") || command.equals("gt") || command.equals("lt")) {
             // 比較操作
-            String label = "LABEL" + labelCounter++;
-            popToD();
-            decrementSP();
-            writer.write("D=M-D\n");
-            writer.write("@" + label + "\n");
+            String trueLabel = "TRUE" + labelCounter;
+            String endLabel = "END" + labelCounter;
+            labelCounter++;
             
+            // 右オペランドをDレジスタにポップ
+            popToD();
+            
+            // 左オペランドのアドレスを取得（SPを減らす）
+            decrementSP();
+            
+            // 左オペランド - 右オペランドを計算
+            writer.write("D=M-D\n");
+            
+            // 条件に応じてジャンプ
+            writer.write("@" + trueLabel + "\n");
             if (command.equals("eq")) {
                 writer.write("D;JEQ\n"); // 等しい場合
             } else if (command.equals("gt")) {
@@ -63,17 +72,22 @@ public class CodeWriter {
                 writer.write("D;JLT\n"); // より小さい場合
             }
             
+            // 条件が偽の場合
             writer.write("@SP\n");
-            writer.write("A=M-1\n");
-            writer.write("M=0\n");
-            writer.write("@CONTINUE" + labelCounter + "\n");
+            writer.write("A=M\n");
+            writer.write("M=0\n"); // 偽（0）を格納
+            writer.write("@" + endLabel + "\n");
             writer.write("0;JMP\n");
-            writer.write("(" + label + ")\n");
+            
+            // 条件が真の場合
+            writer.write("(" + trueLabel + ")\n");
             writer.write("@SP\n");
-            writer.write("A=M-1\n");
-            writer.write("M=-1\n");
-            writer.write("(CONTINUE" + labelCounter + ")\n");
-            labelCounter++;
+            writer.write("A=M\n");
+            writer.write("M=-1\n"); // 真（-1）を格納
+            
+            // 終了
+            writer.write("(" + endLabel + ")\n");
+            incrementSP();
         } else if (command.equals("and")) {
             // 論理AND
             popToD();
