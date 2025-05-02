@@ -11,6 +11,7 @@ public class Parser {
     private BufferedReader reader;
     private String currentCommand;
     private String currentLine;
+    private boolean hasMoreLines;
     
     // コマンドタイプ
     public static final int C_ARITHMETIC = 0;
@@ -23,32 +24,51 @@ public class Parser {
     public Parser(String filename) throws IOException {
         reader = new BufferedReader(new FileReader(filename));
         currentCommand = null;
-        advance();
+        hasMoreLines = true;
+        readNextLine(); // 最初の行を読み込む
+    }
+    
+    /**
+     * 入力に次のコマンドが存在するかを返す
+     */
+    public boolean hasMoreLines() {
+        return hasMoreLines;
     }
     
     /**
      * 入力から次のコマンドを読み、それを現在のコマンドとする
-     * 入力が存在しない場合はfalseを返す
      */
-    public boolean advance() throws IOException {
+    public void advance() throws IOException {
+        if (currentLine != null && !currentLine.isEmpty()) {
+            currentCommand = currentLine;
+        }
+        readNextLine();
+    }
+    
+    /**
+     * 次の有効な行を読み込む
+     */
+    private void readNextLine() throws IOException {
+        currentLine = null;
+        
         while (true) {
-            currentLine = reader.readLine();
+            String line = reader.readLine();
             
-            if (currentLine == null) {
-                currentCommand = null;
-                return false;
+            if (line == null) {
+                hasMoreLines = false;
+                return;
             }
             
             // コメントと空白行を無視
-            currentLine = currentLine.trim();
-            int commentStart = currentLine.indexOf("//");
+            line = line.trim();
+            int commentStart = line.indexOf("//");
             if (commentStart != -1) {
-                currentLine = currentLine.substring(0, commentStart).trim();
+                line = line.substring(0, commentStart).trim();
             }
             
-            if (!currentLine.isEmpty()) {
-                currentCommand = currentLine;
-                return true;
+            if (!line.isEmpty()) {
+                currentLine = line;
+                return;
             }
         }
     }

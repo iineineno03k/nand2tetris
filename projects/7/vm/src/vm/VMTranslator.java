@@ -50,17 +50,14 @@ public class VMTranslator {
      */
     private void translateCommands() throws IOException {
         // ファイル内のすべてのコマンドをパースして変換
-        while (true) {
+        while (parser.hasMoreLines()) {
+            parser.advance();
             int commandType = parser.commandType();
             
             if (commandType == CodeWriter.C_ARITHMETIC) {
                 codeWriter.writeArithmetic(parser.arg1());
             } else if (commandType == CodeWriter.C_PUSH || commandType == CodeWriter.C_POP) {
                 codeWriter.writePushPop(commandType, parser.arg1(), parser.arg2());
-            }
-            
-            if (!parser.advance()) {
-                break;
             }
         }
     }
