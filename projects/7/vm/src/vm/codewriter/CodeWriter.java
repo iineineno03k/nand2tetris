@@ -123,6 +123,23 @@ public class CodeWriter {
                 pushD();
                 return;
             }
+
+            if (segment.equals("pointer")) {
+                if (index == 0) {
+                    // thisの挙動
+                    writer.write("@THIS\n");
+                    writer.write("D=M\n");
+                    pushD();
+                } else if (index == 1) {
+                    // thatの挙動
+                    writer.write("@THAT\n");
+                    writer.write("D=M\n");
+                    pushD();
+                }
+
+                return;
+            }
+
             // constant以外の実装
             if (segment.equals("local")) {
                 // ローカル変数の値をプッシュ
@@ -158,6 +175,21 @@ public class CodeWriter {
         } else if (command == C_POP) {
             // VMコマンドのコメントを追加
             writer.write("// pop " + segment + " " + index + "\n");
+
+            if (segment.equals("pointer")) {
+                if (index == 0) {
+                    // thisの挙動
+                    popToD();
+                    writer.write("@THIS\n");
+                    writer.write("M=D\n");
+                } else if (index == 1) {
+                    // thatの挙動
+                    popToD();
+                    writer.write("@THAT\n");
+                    writer.write("M=D\n");
+                }
+                return;
+            }
 
             // 1. ポップ先のアドレスを計算
             if (segment.equals("local")) {
