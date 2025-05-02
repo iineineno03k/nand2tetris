@@ -166,6 +166,10 @@ public class CodeWriter {
                 writer.write("@5\n");
                 writer.write("D=A\n");
 
+            } else if (segment.equals("static")) {
+                writer.write("@16\n");
+                writer.write("D=A\n");
+
             }
             writer.write("@" + index + "\n");
             writer.write("A=D+A\n");
@@ -211,6 +215,9 @@ public class CodeWriter {
             } else if (segment.equals("temp")) {
                 // tempセグメントのベースアドレスは固定値5
                 writer.write("@5\n");
+                writer.write("D=A\n");
+            } else if (segment.equals("static")) {
+                writer.write("@16\n");
                 writer.write("D=A\n");
             }
 
