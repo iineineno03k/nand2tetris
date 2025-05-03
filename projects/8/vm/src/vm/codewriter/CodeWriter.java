@@ -9,6 +9,7 @@ import java.io.IOException;
 public class CodeWriter {
     private FileWriter writer;
     private int labelCounter; // ジャンプラベル用カウンタ
+    private String currentFileName; // 現在のファイル名
 
     // コマンドタイプ定数
     public static final int C_ARITHMETIC = 0;
@@ -274,5 +275,195 @@ public class CodeWriter {
     private void popToD() throws IOException {
         decrementSP();
         writer.write("D=M\n");
+    }
+
+    /**
+     * 現在のファイル名を設定する
+     */
+    public void setFileName(String fileName) {
+        // パスからファイル名部分だけを抽出（拡張子なし）
+        int slashIndex = fileName.lastIndexOf('/');
+        int dotIndex = fileName.lastIndexOf('.');
+        
+        if (slashIndex == -1) {
+            slashIndex = fileName.lastIndexOf('\\');
+        }
+        
+        if (dotIndex == -1) {
+            currentFileName = fileName.substring(slashIndex + 1);
+        } else {
+            currentFileName = fileName.substring(slashIndex + 1, dotIndex);
+        }
+    }
+
+    /**
+     * labelコマンドを実装する
+     */
+    public void writeLabel(String label) throws IOException {
+        writer.write("// label " + label + "\n");
+        writer.write("(" + label + ")\n");
+    }
+
+    /**
+     * gotoコマンドを実装する
+     */
+    public void writeGoto(String label) throws IOException {
+        writer.write("// goto " + label + "\n");
+        writer.write("@" + label + "\n");
+        writer.write("0;JMP\n");
+    }
+
+    /**
+     * if-gotoコマンドを実装する
+     */
+    public void writeIf(String label) throws IOException {
+        writer.write("// if-goto " + label + "\n");
+        popToD();
+        writer.write("@" + label + "\n");
+        writer.write("D;JNE\n");
+    }
+
+    /**
+     * functionコマンドを実装する
+     */
+    public void writeFunction(String functionName, int numLocals) throws IOException {
+        writer.write("// function " + functionName + " " + numLocals + "\n");
+        
+        // 関数ラベルを宣言
+        writer.write("(" + functionName + ")\n");
+        
+        // ローカル変数を0で初期化
+        for (int i = 0; i < numLocals; i++) {
+            writer.write("@0\n");
+            writer.write("D=A\n");
+            pushD();
+        }
+    }
+
+    /**
+     * callコマンドを実装する
+     */
+    public void writeCall(String functionName, int numArgs) throws IOException {
+        writer.write("// call " + functionName + " " + numArgs + "\n");
+        
+        String returnLabel = functionName + "$ret." + labelCounter;
+        labelCounter++;
+        
+        // リターンアドレスをプッシュ
+        writer.write("@" + returnLabel + "\n");
+        writer.write("D=A\n");
+        pushD();
+        
+        // 呼び出し元のLCL, ARG, THIS, THATをプッシュ
+        writer.write("@LCL\n");
+        writer.write("D=M\n");
+        pushD();
+        
+        writer.write("@ARG\n");
+        writer.write("D=M\n");
+        pushD();
+        
+        writer.write("@THIS\n");
+        writer.write("D=M\n");
+        pushD();
+        
+        writer.write("@THAT\n");
+        writer.write("D=M\n");
+        pushD();
+        
+        // ARG = SP - 5 - numArgs
+        writer.write("@SP\n");
+        writer.write("D=M\n");
+        writer.write("@5\n");
+        writer.write("D=D-A\n");
+        writer.write("@" + numArgs + "\n");
+        writer.write("D=D-A\n");
+        writer.write("@ARG\n");
+        writer.write("M=D\n");
+        
+        // LCL = SP
+        writer.write("@SP\n");
+        writer.write("D=M\n");
+        writer.write("@LCL\n");
+        writer.write("M=D\n");
+        
+        // 関数にジャンプ
+        writeGoto(functionName);
+        
+        // リターンラベル
+        writer.write("(" + returnLabel + ")\n");
+    }
+
+    /**
+     * returnコマンドを実装する
+     */
+    public void writeReturn() throws IOException {
+        writer.write("// return\n");
+        
+        // フレームをR13に保存（フレーム = LCL）
+        writer.write("@LCL\n");
+        writer.write("D=M\n");
+        writer.write("@R13\n");
+        writer.write("M=D\n");
+        
+        // リターンアドレスをR14に保存（リターンアドレス = *(フレーム-5)）
+        writer.write("@5\n");
+        writer.write("A=D-A\n");
+        writer.write("D=M\n");
+        writer.write("@R14\n");
+        writer.write("M=D\n");
+        
+        // 戻り値を引数0の位置に配置
+        popToD();
+        writer.write("@ARG\n");
+        writer.write("A=M\n");
+        writer.write("M=D\n");
+        
+        // SPを引数の次の位置に設定（SP = ARG+1）
+        writer.write("@ARG\n");
+        writer.write("D=M+1\n");
+        writer.write("@SP\n");
+        writer.write("M=D\n");
+        
+        // THATを復元（THAT = *(フレーム-1)）
+        writer.write("@R13\n");
+        writer.write("D=M\n");
+        writer.write("@1\n");
+        writer.write("A=D-A\n");
+        writer.write("D=M\n");
+        writer.write("@THAT\n");
+        writer.write("M=D\n");
+        
+        // THISを復元（THIS = *(フレーム-2)）
+        writer.write("@R13\n");
+        writer.write("D=M\n");
+        writer.write("@2\n");
+        writer.write("A=D-A\n");
+        writer.write("D=M\n");
+        writer.write("@THIS\n");
+        writer.write("M=D\n");
+        
+        // ARGを復元（ARG = *(フレーム-3)）
+        writer.write("@R13\n");
+        writer.write("D=M\n");
+        writer.write("@3\n");
+        writer.write("A=D-A\n");
+        writer.write("D=M\n");
+        writer.write("@ARG\n");
+        writer.write("M=D\n");
+        
+        // LCLを復元（LCL = *(フレーム-4)）
+        writer.write("@R13\n");
+        writer.write("D=M\n");
+        writer.write("@4\n");
+        writer.write("A=D-A\n");
+        writer.write("D=M\n");
+        writer.write("@LCL\n");
+        writer.write("M=D\n");
+        
+        // リターンアドレスにジャンプ
+        writer.write("@R14\n");
+        writer.write("A=M\n");
+        writer.write("0;JMP\n");
     }
 }

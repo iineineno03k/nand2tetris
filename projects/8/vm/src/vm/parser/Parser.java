@@ -17,6 +17,12 @@ public class Parser {
     public static final int C_ARITHMETIC = 0;
     public static final int C_PUSH = 1;
     public static final int C_POP = 2;
+    public static final int C_LABEL = 3;
+    public static final int C_GOTO = 4;
+    public static final int C_IF = 5;
+    public static final int C_FUNCTION = 6;
+    public static final int C_RETURN = 7;
+    public static final int C_CALL = 8;
     
     /**
      * 入力ファイルを開き、パースする準備をする
@@ -88,6 +94,18 @@ public class Parser {
             return C_PUSH;
         } else if (command.equals("pop")) {
             return C_POP;
+        } else if (command.equals("label")) {
+            return C_LABEL;
+        } else if (command.equals("goto")) {
+            return C_GOTO;
+        } else if (command.equals("if-goto")) {
+            return C_IF;
+        } else if (command.equals("function")) {
+            return C_FUNCTION;
+        } else if (command.equals("call")) {
+            return C_CALL;
+        } else if (command.equals("return")) {
+            return C_RETURN;
         } else if (isArithmeticCommand(command)) {
             return C_ARITHMETIC;
         }
