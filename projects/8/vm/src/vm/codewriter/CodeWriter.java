@@ -168,9 +168,11 @@ public class CodeWriter {
                 writer.write("D=A\n");
 
             } else if (segment.equals("static")) {
-                writer.write("@16\n");
-                writer.write("D=A\n");
-
+                // staticはクラス名.インデックスという形式のシンボルを使用
+                writer.write("@" + currentFileName + "." + index + "\n");
+                writer.write("D=M\n");
+                pushD();
+                return;
             }
             writer.write("@" + index + "\n");
             writer.write("A=D+A\n");
@@ -218,8 +220,11 @@ public class CodeWriter {
                 writer.write("@5\n");
                 writer.write("D=A\n");
             } else if (segment.equals("static")) {
-                writer.write("@16\n");
-                writer.write("D=A\n");
+                // staticはクラス名.インデックスという形式のシンボルを使用
+                popToD();
+                writer.write("@" + currentFileName + "." + index + "\n");
+                writer.write("M=D\n");
+                return;
             }
 
             // インデックスを加算してアドレスを計算
