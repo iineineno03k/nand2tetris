@@ -110,6 +110,9 @@ public class VMTranslator {
         // コードライターを初期化
         codeWriter = new CodeWriter(asmFilePath);
         
+        // ブートストラップコードを生成
+        codeWriter.writeBootstrap();
+        
         // ディレクトリ内の全VMファイルを処理
         File[] files = dir.listFiles((d, name) -> name.endsWith(".vm"));
         if (files != null) {

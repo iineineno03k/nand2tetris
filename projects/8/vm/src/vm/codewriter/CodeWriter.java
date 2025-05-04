@@ -466,4 +466,20 @@ public class CodeWriter {
         writer.write("A=M\n");
         writer.write("0;JMP\n");
     }
+
+    /**
+     * ブートストラップコードを生成する
+     */
+    public void writeBootstrap() throws IOException {
+        writer.write("// Bootstrap code\n");
+        
+        // SPを256に初期化
+        writer.write("@256\n");
+        writer.write("D=A\n");
+        writer.write("@SP\n");
+        writer.write("M=D\n");
+        
+        // Sys.initを呼び出す
+        writeCall("Sys.init", 0);
+    }
 }
